@@ -50,8 +50,7 @@ def check_tokens():
 
 
 def send_message(bot, message):
-    """Отправляет сообщение в Telegram чат,
-    определяемый переменной окружения TELEGRAM_CHAT_ID."""
+    """Отправляет сообщение в Telegram чат."""
     try:
         bot.send_message(TELEGRAM_CHAT_ID, message)
         logging.debug('Сообщение отправлено!')
@@ -61,10 +60,7 @@ def send_message(bot, message):
 
 
 def get_api_answer(timestamp):
-    """Делает запрос к единственному эндпоинту API-сервиса.
-    В качестве параметра в функцию передается временная метка.
-    В случае успешного запроса должна вернуть ответ API,
-    приведя его из формата JSON к типам данных Python."""
+    """Делает запрос к единственному эндпоинту API-сервиса."""
     params = {'from_date': timestamp}
     try:
         homework_statuses = requests.get(
@@ -93,8 +89,7 @@ def check_response(response):
 
 
 def parse_status(homework):
-    """"Извлекает из информации о конкретной домашней работе
-    статус этой работы"""
+    """Извлекает из информации о конкретной домашней работе статус работы"""
     homework_name = homework.get('homework_name')
     homework_status = homework.get('status')
     if 'homework_name' not in homework:
