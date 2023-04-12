@@ -5,7 +5,7 @@ class ApiAnswerError(Exception):
 
 
 class BotMessageError(Exception):
-    """Отправка сообщения ботов невозможна."""
+    """Отправка сообщения ботa невозможна."""
 
     pass
 
