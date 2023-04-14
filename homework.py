@@ -70,7 +70,6 @@ def get_api_answer(timestamp):
         logging.debug(f'Отправка запроса на {ENDPOINT} с параметрами {params}')
         return homework_statuses.json()
     except requests.exceptions.RequestException as request_error:
-        logging.error(f'Ошибка запроса {request_error}')
         raise ApiAnswerError(f'Ошибка запроса {request_error}')
 
 
