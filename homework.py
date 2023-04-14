@@ -36,17 +36,15 @@ logging.basicConfig(
 
 def check_tokens():
     """Проверяет доступность переменных окружения."""
-    list_env = [
+    tokens_env = [
         PRACTICUM_TOKEN,
         TELEGRAM_TOKEN,
         TELEGRAM_CHAT_ID
     ]
-    for token in list_env:
-        if token is None:
-            logging.critical(
-                'Отсутствует обязательная переменная окружения: '
-                f'{token}!')
-    return all(list_env)
+    if all(tokens_env) is True:
+        return all(tokens_env)
+    else:
+        logging.critical('Отсутствует обязательная переменная окружения!')
 
 
 def send_message(bot, message):
@@ -62,6 +60,7 @@ def send_message(bot, message):
 def get_api_answer(timestamp):
     """Делает запрос к единственному эндпоинту API-сервиса."""
     params = {'from_date': timestamp}
+    logging.debug(f'Запрос отправлен в {timestamp}!')
     try:
         homework_statuses = requests.get(
             ENDPOINT, headers=HEADERS, params=params)
@@ -72,6 +71,7 @@ def get_api_answer(timestamp):
         return homework_statuses.json()
     except requests.exceptions.RequestException as request_error:
         logging.error(f'Ошибка запроса {request_error}')
+        raise ApiAnswerError(f'Ошибка запроса {request_error}')
 
 
 def check_response(response):
@@ -82,9 +82,13 @@ def check_response(response):
     if 'homeworks' not in response:
         logging.error('Ключ homeworks отсутствует')
         raise KeyError('Ключ homeworks отсутствует')
+    if 'current_date' not in response:
+        logging.error('Ключ current_date отсутствует')
+        raise KeyError('Ключ current_date отсутствует')
     if not isinstance(response['homeworks'], list):
         logging.error('Объект homeworks не является списком')
         raise TypeError('Объект homeworks не является списком')
+
     return response.get('homeworks')
 
 
@@ -99,7 +103,7 @@ def parse_status(homework):
         logging.error(message)
         raise ParseStatusError(message)
     verdict = HOMEWORK_VERDICTS.get(homework_status)
-    if homework_status is None:
+    if not homework_status:
         logging.debug('Статус домашних работ не изменился.')
     if homework_status not in HOMEWORK_VERDICTS:
         raise KeyError('homework_status отсутствует в HOMEWORK_VERDICTS')
@@ -117,17 +121,19 @@ def main():
 
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     timestamp = int(time.time()) - 30 * 24 * 60 * 60
-    previous_homework = None
+    previous_status = None
     while True:
         try:
             response = get_api_answer(timestamp)
             homeworks = check_response(response)
-            if homeworks and homeworks != previous_homework:
+            if homeworks:
                 message = parse_status(homeworks[0])
-                send_message(bot, message)
-                logging.info(f'Бот отправил сообщение: "{message}"')
-                previous_homework = homeworks
-            timestamp = response.get('current_date')
+                if previous_status != message:
+                    send_message(bot, message)
+                    logging.info(f'Бот отправил сообщение: "{message}"')
+                    previous_status = message
+                else:
+                    logging.debug('Статус домашней работы не изменился')
         except Exception as error:
             message = f'Сбой в работе программы: {error}'
             logging.error(f'Ошибка при запросе к основному API: {error}')
