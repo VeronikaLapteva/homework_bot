@@ -44,7 +44,7 @@ def check_tokens():
     if all(tokens_env) is True:
         return all(tokens_env)
     else:
-        logging.critical('Отсутствует обязательная переменная окружения!')
+        return all(tokens_env)
 
 
 def send_message(bot, message):
